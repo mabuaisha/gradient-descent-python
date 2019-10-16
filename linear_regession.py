@@ -48,15 +48,12 @@ def plot_cost_and_iterations(iters,
                              plot_name,
                              plot_title):
     fig, ax = plt.subplots()
-    # ax.plot(np.array(theta_0_lst), np.array(cost_history), 'r')
-    # ax.plot(np.array(theta_1_lst), np.array(cost_history), 'g')
-    # ax.plot(np.array(theta_2_lst), np.array(cost_history), 'b')
     ax.plot(np.arange(iters), cost, 'r')
     ax.set_xlabel('Iterations')
     ax.set_ylabel('Cost')
     ax.set_title(plot_title)
-    # fig.show()
     plt.savefig('{0}/{1}.png'.format(plot_location, plot_name))
+    plt.close(fig)
 
 
 def parse_dataset(dataset_name):
