@@ -14,14 +14,13 @@ from linear_regession import (
     plot_cost_and_iterations
 )
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
-def prepare_dataset(dataset, sample_size, features_num) -> tuple:
+def prepare_dataset(dataset, sample_size, features_num, goal=-1):
     input_data = dataset.iloc[:, :features_num]
-    output_data = dataset.iloc[:, -1]
+    output_data = dataset.iloc[:, goal]
 
     scaler = StandardScaler()
     input_data = scaler.fit_transform(input_data)
@@ -69,14 +68,13 @@ def apply_gradient_descent(data_input,
             iterations
         )
 
-    logger.info("Thetas For each run {0}".format(new_thetas))
-
     # Plot cost function
     plot_cost_and_iterations(iterations,
                              cost_history,
                              plot_location,
                              plot_name,
                              plot_title)
+    return cost_history, new_thetas
 
 
 def apply_dataset_iter(runs,
@@ -88,22 +86,24 @@ def apply_dataset_iter(runs,
                        alphas,
                        iterations,
                        plot_location):
-
+    runs_cost = {}
     for index in range(runs):
         # Apply gradient descent for training data
-        thetas = thetas * (index + 1)
         plot_title = 'Training Data, Run {0}, Alpah {1}' \
                      ''.format(index + 1, alphas[index])
         plot_name = 'trainig_data_run_{}'.format(index + 1)
-        apply_gradient_descent(data_train,
-                               output_train,
-                               thetas,
-                               alphas[index],
-                               iterations,
-                               plot_location,
-                               plot_name,
-                               plot_title)
+        cost_history, new_thetas = apply_gradient_descent(data_train,
+                                                          output_train,
+                                                          thetas,
+                                                          alphas[index],
+                                                          iterations,
+                                                          plot_location,
+                                                          plot_name,
+                                                          plot_title)
 
+        logger.info('Run # {}'.format(index + 1))
+        logger.info('Thetas {}'.format(new_thetas))
+        runs_cost[index + 1] = cost_history[iterations - 1]
         # Apply gradient descent for testing data
         plot_title = 'Testing Data, Run {0}, Alpah {1}' \
                      ''.format(index + 1, alphas[index])
@@ -116,6 +116,7 @@ def apply_dataset_iter(runs,
                                plot_location,
                                plot_name,
                                plot_title)
+        thetas = thetas * 2
 
 
 def apply_hardware_dataset(dataset):
@@ -126,7 +127,7 @@ def apply_hardware_dataset(dataset):
     # Whole dataset it 210 entries, we split 147 (70%) for training data
     # and the remaining for testing data
     sample_size = 147
-    features = 9
+    features = 8
     alphas = [
         0.001,
         0.002,
@@ -141,12 +142,12 @@ def apply_hardware_dataset(dataset):
     ]
 
     data_train, output_train, data_test, output_test = prepare_dataset(
-        dataset, sample_size, features
+        dataset, sample_size, features, -1
     )
 
-    # Initial thetas, the reason why it initialized to 10 since, because x0
+    # Initial thetas, the reason why it initialized to 9 since, because x0
     thetas = np.array([0.02, 0.04, 0.06, 0.08, 0.10,
-                       0.30, 0.50, 0.70, 0.90, 0.98])
+                       0.30, 0.50, 0.70, 0.90])
 
     # Set number of iterations
     iterations = 500
@@ -155,7 +156,7 @@ def apply_hardware_dataset(dataset):
     plot_location = \
         os.path.join(
             os.path.dirname(__name__),
-            'datasets/concrete'
+            'datasets/hardware'
         )
 
     # Apply the whole iterations to generate cost functions and plots
@@ -204,7 +205,7 @@ def apply_concrete_dataset(dataset):
     plot_location = \
         os.path.join(
             os.path.dirname(__name__),
-            'datasets/hardware'
+            'datasets/concrete'
         )
 
     # Apply the whole iterations to generate cost functions and plots
@@ -280,7 +281,7 @@ if __name__ == '__main__':
     concrete_data = parse_dataset('datasets/concrete/concrete-data.csv')
     apply_concrete_dataset(concrete_data)
     logger.info('finish processing Concrete dataset')
-
+    #
     # Apply the Toxicity dataset
     logger.info('Start processing Toxicity dataset ....')
     concrete_data = parse_dataset(
